@@ -1,0 +1,190 @@
+const [formData, setFormData] = useState({
+  faceImage: null,
+  category: '',
+  productDetail: '',
+  setting: '',
+  vibe: ''
+});
+
+const categories = [
+  'Clothing (Shirts/Pants)',
+  'Hijab / Headscarf',
+  'Shoes / Footwear',
+  'Food / Beverage',
+  'Skincare / Cosmetics',
+  'Accessories'
+];
+
+const settingSuggestions = [
+  'Minimalist White Studio',
+  'Aesthetic Café',
+  'Cozy Bedroom',
+  'City Street (Street Style)',
+  'Outdoor Nature / Park'
+];
+
+const vibeSuggestions = [
+  'Cinematic & Dramatic',
+  'Edgy & Bold',
+  'Fun & Playful',
+  'Elegant & Luxurious',
+  'Casual & Relaxed'
+];
+
+const handleNext = () => setStep(step + 1);
+
+const handleReset = () => {
+  setStep(1);
+  setActiveTab(0);
+  setFormData({
+    faceImage: null,
+    category: '',
+    productDetail: '',
+    setting: '',
+    vibe: ''
+  });
+};
+
+const handleImageUpload = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const imageUrl = URL.createObjectURL(file);
+    setFormData({ ...formData, faceImage: imageUrl });
+  }
+};
+
+const handleRemoveImage = (e) => {
+  e.preventDefault();
+  setFormData({ ...formData, faceImage: null });
+};
+
+const simulateGeminiGeneration = () => {
+  setIsGenerating(true);
+  setTimeout(() => {
+    setIsGenerating(false);
+    setStep(3);
+  }, 2000);
+};
+
+// AI Pose Generator Logic
+const generateGeminiPoses = () => {
+  const { category, productDetail, setting, vibe } = formData;
+
+  const prod = productDetail || '[Product]';
+  const set = setting || '[Background]';
+  const vb = vibe || '[Mood]';
+
+  const faceRef = formData.faceImage
+    ? "(Use attached face reference) "
+    : "";
+
+  const templates = {
+    'Clothing (Shirts/Pants)': [
+      {
+        name: "Full-Body OOTD",
+        desc: "Standing pose showing the full outfit flow",
+        img: "Full-body shot, walking confidently. Focus on realistic fabric movement.",
+        vid: "Camera tracks the character walking confidently, showcasing outfit fit."
+      },
+      {
+        name: "Half-Body Detail",
+        desc: "Focus on stitching and clothing details",
+        img: "Medium shot adjusting collar/sleeve with focus on texture.",
+        vid: "Slow zoom while adjusting collar highlighting fabric detail."
+      },
+      {
+        name: "Dynamic Twirl",
+        desc: "Spinning pose for dramatic clothing effect",
+        img: "Character twirling, fabric flowing dynamically.",
+        vid: "Slow-motion spin with fabric flowing beautifully."
+      },
+      {
+        name: "Casual Leaning",
+        desc: "Relaxed lifestyle leaning pose",
+        img: "Leaning casually against a wall with natural fabric drape.",
+        vid: "Relaxed lean with slight body movement."
+      },
+      {
+        name: "Over-the-Shoulder",
+        desc: "Looking back to show outfit back design",
+        img: "Shot from behind looking over shoulder.",
+        vid: "Camera pans as character turns and smiles."
+      }
+    ],
+
+    'Shoes / Footwear': [
+      {
+        name: "Action Step",
+        desc: "Walking pose focusing on shoes",
+        img: "Low-angle shot focusing on shoes during step.",
+        vid: "Camera tracks feet during stylish walking."
+      },
+      {
+        name: "Tying Laces",
+        desc: "Crouching to tie shoelaces",
+        img: "Close-up tying shoelaces showing detail.",
+        vid: "Close-up of tying, then tilt to face."
+      },
+      {
+        name: "Sitting Crossed Legs",
+        desc: "Relaxed sitting with legs extended",
+        img: "Sitting with legs stretched to showcase footwear.",
+        vid: "Playful leg extension toward camera."
+      },
+      {
+        name: "Jump Shot",
+        desc: "Jump highlighting sole and design",
+        img: "Mid-air shot focusing on shoes.",
+        vid: "Slow-motion jump freeze frame."
+      },
+      {
+        name: "Holding Shoe",
+        desc: "Holding shoe close to camera",
+        img: "Product held close with smile.",
+        vid: "Rotating shoe to show angles."
+      }
+    ]
+  };
+
+  const defaultPoses = [
+    {
+      name: "Front Pose",
+      desc: "Standing facing camera",
+      img: "Standard portrait showcasing product.",
+      vid: "Character stands and smiles."
+    },
+    {
+      name: "Casual Hold",
+      desc: "Holding product casually",
+      img: "Medium shot holding product.",
+      vid: "Looking at product thoughtfully."
+    },
+    {
+      name: "Lifestyle Use",
+      desc: "Using product naturally",
+      img: "Natural usage scene.",
+      vid: "Short lifestyle action clip."
+    },
+    {
+      name: "Close-Up",
+      desc: "Detailed close product focus",
+      img: "Extreme close-up shot.",
+      vid: "Camera zoom on product."
+    },
+    {
+      name: "Dynamic Angle",
+      desc: "Creative camera angle",
+      img: "Low-angle dramatic shot.",
+      vid: "Camera tilt for effect."
+    }
+  ];
+
+  const selectedPoses = templates[category] || defaultPoses;
+
+  return selectedPoses.map((pose) => ({
+    name: pose.name,
+    description: pose.desc,
+    imagePrompt: `Photorealistic portrait of a person. ${faceRef}They are showcasing ${prod}. [POSE: ${pose.img}] Set in ${set}. Mood: ${vb}. 8k, cinematic lighting, ultra-detailed.`,
+    videoPrompt: `Cinematic video of a person in ${set}, showcasing ${prod}. [ACTION: ${pose.vid}] Mood: ${vb}. High quality, realistic lighting.`
+  }));
+};
